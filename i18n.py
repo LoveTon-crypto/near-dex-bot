@@ -132,22 +132,6 @@ T = {
     "btn_holders": {"ru": "👥 Холдеры", "en": "👥 Holders"},
     "refreshed": {"ru": "Обновлено", "en": "Updated"},
     "scan_expired": {"ru": "Пришлите адрес токена ещё раз.", "en": "Please send the token address again."},
-    # --- bubble map ---
-    "btn_bubbles": {"ru": "🫧 Bubble map", "en": "🫧 Bubble map"},
-    "bm_wait": {"ru": "Строю bubble map, это займёт до минуты…", "en": "Building the bubble map, up to a minute…"},
-    "bm_title": {"ru": "🫧 <b>Bubble map холдеров · {sym}</b>", "en": "🫧 <b>Holder bubble map · {sym}</b>"},
-    "bm_stats": {"ru": "👥 {n} холдеров · на карте {c} · 🔗 {l} связей",
-                 "en": "👥 {n} holders · captured {c} · 🔗 {l} links"},
-    "bm_clusters": {"ru": "⚠️ <b>{k}</b> кластеров · <b>{m}</b> связанных кошельков:",
-                    "en": "⚠️ <b>{k}</b> clusters · <b>{m}</b> linked wallets:"},
-    "bm_none": {"ru": "✅ Связей между крупными холдерами не найдено.",
-                "en": "✅ No links found between the top holders."},
-    "bm_no_api": {"ru": "ℹ️ История переводов не проверялась (нет ключа FastNEAR) — показаны только субаккаунты.",
-                  "en": "ℹ️ Transfer history not checked (no FastNEAR key) — only sub-accounts are linked."},
-    "bm_legend": {"ru": "Связь = переводы токена или NEAR между кошельками, общий «спонсор» или субаккаунты. "
-                        "Серые — без связей, синие — пулы.",
-                  "en": "Link = token or NEAR transfers between wallets, a shared funder, or sub-accounts. "
-                        "Grey — no links, blue — pools."},
     "never": {"ru": "ещё не было", "en": "not yet"},
     "ago": {"ru": "{s} сек назад", "en": "{s} sec ago"},
     "status": {"ru": ("Сеть: {net}\nПоследний скан: {ago}\nПулов в скане: {pools}\nАлертов за скан: {alerts}\n"

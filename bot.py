@@ -21,7 +21,6 @@ from detector import DEFAULT_IGNORE, DEFAULT_SETTINGS, Alert, PriceHistory, dete
 from dexscreener import PADS, DexScreener, is_nearly, pad_link, pad_name, pad_of
 from gecko import Gecko
 from i18n import COMMANDS, SETTING_HELP, lang_of, t
-from bubbles import COLORS, BubbleBuilder, render_bubbles, supply_fmt
 from scanner import Scanner, TokenCard, age_fmt, extract_address, pct_fmt, price_fmt, render_chart
 
 load_dotenv()
@@ -159,7 +158,6 @@ store = Store(DB_PATH)
 gecko = Gecko(NETWORK)
 dex = DexScreener()
 scanner = Scanner()
-bubbles = BubbleBuilder()
 history = PriceHistory()
 cooldowns: dict[tuple[int, str, str], float] = {}
 last_scan = {"ts": 0.0, "pools": 0, "alerts": 0}
@@ -374,10 +372,8 @@ def card_keyboard(c: TokenCard, lang: str) -> InlineKeyboardMarkup:
     if pad:
         row.append(InlineKeyboardButton(PADS[pad][1], url=PADS[pad][2].format(a=c.address)))
     row.append(InlineKeyboardButton(t(lang, "btn_holders"), url=f"https://nearblocks.io/token/{c.address}#tokenHolders"))
-    key = store.scan_key(c.address)
-    second = [InlineKeyboardButton(t(lang, "btn_bubbles"), callback_data="bm:" + key),
-              InlineKeyboardButton(t(lang, "btn_refresh"), callback_data="rf:" + key)]
-    return InlineKeyboardMarkup([row, second])
+    refresh = [InlineKeyboardButton(t(lang, "btn_refresh"), callback_data="rf:" + store.scan_key(c.address))]
+    return InlineKeyboardMarkup([row, refresh])
 
 
 def visible_len(s: str) -> int:
@@ -458,51 +454,6 @@ async def on_refresh(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     except Exception as e:  # например, «message is not modified»
         log.info("Обновление карточки: %s", e)
     await q.answer(t(lang, "refreshed"))
-
-
-# ---------- bubble map ----------
-def fmt_bubbles(bm, c: TokenCard, lang: str) -> str:
-    n = f"{c.holders_total}+" if c.holders_more else str(c.holders_total)
-    lines = [t(lang, "bm_title", sym=html.escape(c.symbol.upper())),
-             t(lang, "bm_stats", n=n, c=f"{bm.captured:.0f}%", l=len(bm.links)), ""]
-    if bm.clusters:
-        linked = sum(len(g) for g in bm.clusters)
-        lines.append(t(lang, "bm_clusters", k=len(bm.clusters), m=linked))
-        for k, g in enumerate(bm.clusters[:7]):
-            share = sum(bm.holders[i][1] for i in g)
-            members = " · ".join(f'<a href="{nb(bm.holders[i][0])}">#{i + 1}</a>' for i in g[:10])
-            more = f" +{len(g) - 10}" if len(g) > 10 else ""
-            lines.append(f"{COLORS[k % len(COLORS)][1]} {len(g)} · {share:.1f}%: {members}{more}")
-    else:
-        lines.append(t(lang, "bm_none"))
-    if not bm.has_api:
-        lines += ["", t(lang, "bm_no_api")]
-    lines += ["", f"<i>{t(lang, 'bm_legend')}</i>"]
-    return "\n".join(lines)
-
-
-async def on_bubbles(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    lang = L(update)
-    address = store.token_by_key(q.data.split(":", 1)[1])
-    if not address:
-        await q.answer(t(lang, "scan_expired"), show_alert=True)
-        return
-    await q.answer(t(lang, "bm_wait"))
-    await ctx.bot.send_chat_action(update.effective_chat.id, ChatAction.UPLOAD_PHOTO)
-    c = await scanner.card(address, with_chart=False)
-    if c is None or not c.all_holders:
-        await q.message.reply_text(t(lang, "no_holders"))
-        return
-    bm = await bubbles.build(address, c.all_holders)
-    n = f"{c.holders_total}+" if c.holders_more else str(c.holders_total)
-    png = await asyncio.to_thread(render_bubbles, bm, c.symbol, c.name, n, supply_fmt(c.supply))
-    text = fmt_bubbles(bm, c, lang)
-    if visible_len(text) <= 1024:
-        await q.message.reply_photo(png, caption=text, parse_mode=ParseMode.HTML)
-    else:
-        await q.message.reply_photo(png)
-        await q.message.reply_html(text, link_preview_options=NO_PREVIEW)
 
 
 # ---------- команды ----------
@@ -750,7 +701,6 @@ async def on_shutdown(app: Application):
     await gecko.close()
     await dex.close()
     await scanner.close()
-    await bubbles.close()
 
 
 def main():
@@ -764,7 +714,6 @@ def main():
                      ("scan", cmd_scan)]:
         app.add_handler(CommandHandler(name, fn))
     app.add_handler(CallbackQueryHandler(on_refresh, pattern=r"^rf:"))
-    app.add_handler(CallbackQueryHandler(on_bubbles, pattern=r"^bm:"))
     app.add_handler(CallbackQueryHandler(on_lang_button, pattern=r"^lang:(ru|en)$"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     app.job_queue.run_repeating(discover, interval=DISCOVER_INTERVAL, first=3)

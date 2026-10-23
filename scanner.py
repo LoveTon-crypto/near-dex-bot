@@ -65,7 +65,6 @@ class TokenCard:
     holders: list = field(default_factory=list)   # [(account, pct, is_pool)]
     holders_total: int = 0
     holders_more: bool = False                     # держателей больше, чем вернул API
-    all_holders: list = field(default_factory=list)  # все полученные [(account, pct, is_pool)] — для bubble map
     candles: list = field(default_factory=list)   # [(ts, o, h, l, c, v)] по возрастанию времени
     ath_mcap: float = 0.0
 
@@ -203,7 +202,6 @@ class Scanner:
                 rows.append((acc, bal * 100 / c.supply_raw, is_pool_account(acc, c.address)))
         rows.sort(key=lambda r: r[1], reverse=True)
         c.holders_total = len(rows)
-        c.all_holders = rows
         c.holders_more = len(accounts) >= 100
         people = [r for r in rows if not r[2]][:10]
         pools = [r for r in rows if r[2]][:2]
