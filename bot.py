@@ -462,7 +462,7 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not await is_admin(update, ctx, lang):
         return
     store.subscribe(update.effective_chat.id)
-    await update.effective_message.reply_html(t(lang, "started") + t(lang, "help"))
+    await update.effective_message.reply_html(t(lang, "started") + t(lang, "help"), reply_markup=LANG_KB)
 
 
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -483,10 +483,32 @@ async def cmd_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     choice = (ctx.args[0].lower() if ctx.args else "")
     if choice not in ("ru", "en"):
-        await update.effective_message.reply_text(t(lang, "lang_usage"))
+        code = (update.effective_user.language_code if update.effective_user else None) or "—"
+        await update.effective_message.reply_text(t(lang, "lang_pick", code=code), reply_markup=LANG_KB)
         return
     store.set_lang(update.effective_chat.id, choice)
     await update.effective_message.reply_text(t(choice, "lang_set"))
+
+
+LANG_KB = InlineKeyboardMarkup([[InlineKeyboardButton("🇬🇧 English", callback_data="lang:en"),
+                                 InlineKeyboardButton("🇷🇺 Русский", callback_data="lang:ru")]])
+
+
+async def on_lang_button(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    lang = L(update)
+    if update.effective_chat.type != ChatType.PRIVATE:
+        member = await ctx.bot.get_chat_member(update.effective_chat.id, update.effective_user.id)
+        if member.status not in ("administrator", "creator"):
+            await q.answer(t(lang, "admins_only"), show_alert=True)
+            return
+    choice = q.data.split(":", 1)[1]
+    store.set_lang(update.effective_chat.id, choice)
+    await q.answer()
+    try:
+        await q.edit_message_text(t(choice, "lang_set"))
+    except Exception:
+        pass
 
 
 async def cmd_settings(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -692,6 +714,7 @@ def main():
                      ("scan", cmd_scan)]:
         app.add_handler(CommandHandler(name, fn))
     app.add_handler(CallbackQueryHandler(on_refresh, pattern=r"^rf:"))
+    app.add_handler(CallbackQueryHandler(on_lang_button, pattern=r"^lang:(ru|en)$"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     app.job_queue.run_repeating(discover, interval=DISCOVER_INTERVAL, first=3)
     app.job_queue.run_repeating(scan, interval=SCAN_INTERVAL, first=40)

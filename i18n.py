@@ -114,6 +114,8 @@ T = {
                   "en": "🟢 {name}: top by 24h volume (tracking {n} tokens)"},
     "lang_set": {"ru": "✅ Язык бота в этом чате: русский", "en": "✅ Bot language in this chat: English"},
     "lang_usage": {"ru": "Формат: /lang ru или /lang en", "en": "Usage: /lang ru or /lang en"},
+    "lang_pick": {"ru": "Выберите язык бота для этого чата.\n(Язык, который передаёт ваш Telegram: {code})",
+                  "en": "Choose the bot language for this chat.\n(Language your Telegram reports: {code})"},
     # --- сканер токенов ---
     "scan_usage": {"ru": "Пришлите адрес токена NEAR или ссылку, например:\n<code>/scan raven.nearlytrade.near</code>",
                    "en": "Send a NEAR token address or link, e.g.:\n<code>/scan raven.nearlytrade.near</code>"},
