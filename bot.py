@@ -462,7 +462,7 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not await is_admin(update, ctx, lang):
         return
     store.subscribe(update.effective_chat.id)
-    await update.effective_message.reply_html(t(lang, "started") + t(lang, "help"), reply_markup=LANG_KB)
+    await update.effective_message.reply_html(t(lang, "started") + t(lang, "help"))
 
 
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
