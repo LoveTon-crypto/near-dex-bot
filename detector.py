@@ -20,10 +20,11 @@ DEFAULT_SETTINGS = {
     "skip_bridged": 1,      # 1 = не присылать по мостовым монетам (*.omft.near, Near Intents)
     "nearly": 1,            # 1 = следить за мемпадом nearly.trade
     "hoot": 1,              # 1 = следить за мемпадом justhoot.fun
-    "nearly_new": 1,        # 1 = сообщать о новых токенах на мемпадах
+    "nearly_new": 0,        # 1 = сообщать о новых токенах на мемпадах (по умолчанию выключено)
     "nearly_min_liq": 1_000,   # мемпады: мин. ликвидность, $
     "nearly_min_vol": 300,     # мемпады: мин. объём за 5 мин для всплеска и пампа/дампа, $
     "nearly_min_vol1h": 1_500, # мемпады: мин. объём за 1 ч для часового всплеска, $
+    "min_alert_vol": 500,   # любые алерты с объёмом меньше этого не присылаем, $
 }
 
 # Крупные монеты и стейблкоины: по ним алерты не шлём (если они не в вотчлисте)
@@ -141,6 +142,14 @@ def detect(pool: Pool, s: dict, history: PriceHistory, watched: bool = False,
         if peak_i < len(pts) - 1 and rise >= s["pd_rise"] and fall <= -s["pd_fall"]:
             alerts.append(Alert("pumpdump", pool,
                                 {"rise": f"{rise:+.0f}%", "fall": f"{fall:+.0f}%", "m": int(s["pd_window"])}))
+
+    # 5. Общий фильтр: алерты с маленьким объёмом не присылаем
+    floor = s.get("min_alert_vol", 0)
+    if floor and not watched:
+        vol_of = {"volume5m": v.get("m5", 0), "volume1h": v.get("h1", 0),
+                  "pump": max(v.get("m15", 0), v.get("m5", 0)), "dump": max(v.get("m15", 0), v.get("m5", 0)),
+                  "pumpdump": v.get("h1", 0)}
+        alerts = [a for a in alerts if vol_of.get(a.kind, 0) >= floor]
     return alerts
 
 

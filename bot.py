@@ -55,8 +55,21 @@ class Store:
             CREATE TABLE IF NOT EXISTS scan_keys (key TEXT PRIMARY KEY, token TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS chat_lang (chat_id INTEGER PRIMARY KEY, lang TEXT NOT NULL,
                                                   manual INTEGER NOT NULL DEFAULT 0);
+            CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY);
         """)
         self.db.commit()
+        self._migrate()
+
+    def _migrate(self):
+        """Разовые изменения настроек уже подписанных чатов."""
+        done = {r[0] for r in self.db.execute("SELECT name FROM migrations").fetchall()}
+        if "new_tokens_off" not in done:  # алерты о новых токенах мемпадов выключены у всех
+            for cid, raw in self.db.execute("SELECT chat_id, settings FROM chats").fetchall():
+                s = json.loads(raw)
+                s["nearly_new"] = 0
+                self.db.execute("UPDATE chats SET settings=? WHERE chat_id=?", (json.dumps(s), cid))
+            self.db.execute("INSERT INTO migrations VALUES ('new_tokens_off')")
+            self.db.commit()
 
     def subscribe(self, chat_id: int):
         self.db.execute("INSERT OR IGNORE INTO chats VALUES (?, ?)", (chat_id, json.dumps(DEFAULT_SETTINGS)))

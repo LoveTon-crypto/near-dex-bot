@@ -162,6 +162,7 @@ SETTING_HELP = {
         "nearly_min_liq": "мемпады: мин. ликвидность, $",
         "nearly_min_vol": "мемпады: мин. объём за 5 мин, $",
         "nearly_min_vol1h": "мемпады: мин. объём за 1 ч, $",
+        "min_alert_vol": "не присылать алерты с объёмом меньше, $",
     },
     "en": {
         "min_liq": "min pool liquidity, $",
@@ -182,6 +183,7 @@ SETTING_HELP = {
         "nearly_min_liq": "memepads: min liquidity, $",
         "nearly_min_vol": "memepads: min 5-min volume, $",
         "nearly_min_vol1h": "memepads: min 1h volume, $",
+        "min_alert_vol": "skip alerts with volume below, $",
     },
 }
 
