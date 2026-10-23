@@ -70,6 +70,14 @@ class Store:
                 self.db.execute("UPDATE chats SET settings=? WHERE chat_id=?", (json.dumps(s), cid))
             self.db.execute("INSERT INTO migrations VALUES ('new_tokens_off')")
             self.db.commit()
+        if "min_alert_vol_1000" not in done:  # порог объёма по умолчанию поднят с $500 до $1000
+            for cid, raw in self.db.execute("SELECT chat_id, settings FROM chats").fetchall():
+                s = json.loads(raw)
+                if s.get("min_alert_vol", 500) == 500:
+                    s["min_alert_vol"] = 1000
+                    self.db.execute("UPDATE chats SET settings=? WHERE chat_id=?", (json.dumps(s), cid))
+            self.db.execute("INSERT INTO migrations VALUES ('min_alert_vol_1000')")
+            self.db.commit()
 
     def subscribe(self, chat_id: int):
         self.db.execute("INSERT OR IGNORE INTO chats VALUES (?, ?)", (chat_id, json.dumps(DEFAULT_SETTINGS)))
