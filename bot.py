@@ -33,7 +33,7 @@ NETWORK = os.getenv("NETWORK", "near")
 SCAN_INTERVAL = int(os.getenv("SCAN_INTERVAL", "120"))   # сек между сканами
 TOP_PAGES = int(os.getenv("TOP_PAGES", "3"))             # 20 пулов на страницу
 DB_PATH = os.getenv("DB_PATH", "bot.db")
-DEFAULT_LANG = os.getenv("DEFAULT_LANG", "ru")           # язык чатов, где язык ещё не определён
+DEFAULT_LANG = "en"                                     # бот по умолчанию на английском
 DISCOVER_INTERVAL = int(os.getenv("DISCOVER_INTERVAL", "600"))  # поиск новых токенов мемпадов, сек
 
 NO_PREVIEW = LinkPreviewOptions(is_disabled=True)
@@ -77,6 +77,10 @@ class Store:
                     s["min_alert_vol"] = 1000
                     self.db.execute("UPDATE chats SET settings=? WHERE chat_id=?", (json.dumps(s), cid))
             self.db.execute("INSERT INTO migrations VALUES ('min_alert_vol_1000')")
+            self.db.commit()
+        if "default_lang_en" not in done:  # все чаты на английский, кроме выбравших язык вручную
+            self.db.execute("UPDATE chat_lang SET lang='en' WHERE manual=0")
+            self.db.execute("INSERT INTO migrations VALUES ('default_lang_en')")
             self.db.commit()
 
     def subscribe(self, chat_id: int):
@@ -709,11 +713,11 @@ async def cmd_status(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 
 async def on_startup(app: Application):
-    """Меню команд: русское для русскоязычных пользователей Telegram, английское для остальных."""
+    """Меню команд на английском для всех."""
     try:
         await app.bot.set_my_commands([BotCommand(c, d) for c, d in COMMANDS["en"]])
-        for code in ("ru", "uk", "be", "kk"):
-            await app.bot.set_my_commands([BotCommand(c, d) for c, d in COMMANDS["ru"]], language_code=code)
+        for code in ("ru", "uk", "be", "kk"):  # убрать старые русские меню
+            await app.bot.delete_my_commands(language_code=code)
     except Exception as e:
         log.warning("Не удалось задать меню команд: %s", e)
 

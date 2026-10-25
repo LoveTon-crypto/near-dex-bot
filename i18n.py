@@ -1,11 +1,9 @@
 """Тексты бота на русском и английском."""
 from __future__ import annotations
 
-RU_LANGS = ("ru", "uk", "be", "kk")  # для этих языков Telegram — русский, для остальных — английский
-
-
 def lang_of(language_code: str | None) -> str:
-    return "ru" if (language_code or "").lower().startswith(RU_LANGS) else "en"
+    """Бот по умолчанию на английском для всех. Русский — только вручную через /lang ru."""
+    return "en"
 
 
 T = {
