@@ -242,7 +242,8 @@ async def send(ctx, cid: int, text: str) -> bool:
         return True
     except Exception as e:  # чат удалён / бот выгнан
         log.warning("Не удалось отправить в %s: %s", cid, e)
-        if "chat not found" in str(e).lower() or "kicked" in str(e).lower():
+        err = str(e).lower()
+        if any(k in err for k in ("chat not found", "kicked", "deactivated", "blocked by the user")):
             store.unsubscribe(cid)
         return False
 
